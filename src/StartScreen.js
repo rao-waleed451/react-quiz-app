@@ -1,0 +1,11 @@
+function StartScreen({numQuestion,dispatch}) {
+    return (
+        <div className="start">
+            <h2>welcome to react quiz!</h2>
+            <h3>{numQuestion} questions to test your react mastery</h3>
+            <button className="btn btn-ui" onClick={()=>dispatch({type:"start"})}>Lets start</button>
+        </div>
+    )
+}
+
+export default StartScreen
