@@ -7,8 +7,9 @@ import StartScreen from "../StartScreen";
 import Question from "./Question";
 import NextQuestion from "./NextQuestion";
 import Progress from "./Progress";
-import { point } from "leaflet";
 import FinishScreen from "./FinishScreen";
+import Footer from "./Footer";
+import Timer from "./Timer";
 
 const initialState = {
   questions: [],
@@ -17,7 +18,10 @@ const initialState = {
   answer: null,
   points: 0,
   highscore: 0,
+  secondRemaining: null,
 };
+
+const SECS_PER_QUESTION=30
 function reducer(state, action) {
   switch (action.type) {
     case "dataReceived":
@@ -35,7 +39,7 @@ function reducer(state, action) {
     case "start":
       return {
         ...state,
-        status: "active",
+        status: "active",secondRemaining:state.questions.length*SECS_PER_QUESTION
       };
 
     case "newAnswer":
@@ -59,25 +63,35 @@ function reducer(state, action) {
       return {
         ...state,
         status: "finished",
-        highscore:state.points > state.highscore ? state.points : state.highscore,
+        highscore:
+          state.points > state.highscore ? state.points : state.highscore,
       };
-      case "reset":
-        return {
-           ...initialState,questions:state.questions,status:"ready",highscore:state.highscore
-        }
+    case "reset":
+      return {
+        ...initialState,
+        questions: state.questions,
+        status: "ready",
+        highscore: state.highscore,
+      };
+
+    case "tick":
+      return {
+        ...state,
+        secondRemaining: state.secondRemaining - 1,
+      };
 
     default:
       throw new Error("Action unknown");
   }
 }
 function App() {
-  const [{ questions, status, index, answer, points,highscore }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [
+    { questions, status, index, answer, points, highscore, secondRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
   const totalPoints = questions.reduce((acc, curr) => curr.points + acc, 0);
   const numQuestion = questions.length;
-  
+
   useEffect(function () {
     fetch("http://localhost:5000/questions")
       .then((res) => res.json())
@@ -108,16 +122,24 @@ function App() {
               dispatch={dispatch}
               answer={answer}
             />
-            <NextQuestion
-              dispatch={dispatch}
-              answer={answer}
-              index={index}
-              totalQuestions={numQuestion}
-            />
+            <Footer>
+              <Timer dispatch={dispatch} secondRemaining={secondRemaining} />
+              <NextQuestion
+                dispatch={dispatch}
+                answer={answer}
+                index={index}
+                totalQuestions={numQuestion}
+              />
+            </Footer>
           </>
         )}
         {status === "finished" && (
-          <FinishScreen points={points} totalPoints={totalPoints} highscore={highscore} dispatch={dispatch}/>
+          <FinishScreen
+            points={points}
+            totalPoints={totalPoints}
+            highscore={highscore}
+            dispatch={dispatch}
+          />
         )}
       </Main>
     </div>
